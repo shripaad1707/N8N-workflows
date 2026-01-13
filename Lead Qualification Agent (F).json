@@ -1,0 +1,976 @@
+{
+  "name": "Lead Qualification Agent (F)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        608
+      ],
+      "id": "7fc20357-4dab-4b31-87ff-92dd17313bae",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0SXuLT762uSaKzM8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Message from email :\" {{ $json.Subject }} \"\nYou are Lumi, a polite and professional Lead Qualification and Auto-Responder assistant.\nYou read incoming customer emails for a business and decide the intent, lead quality, and next step.\nAlways respond in a warm, human-sounding tone — short and clear, not robotic.\nYour goals:\n\nIdentify what the customer wants (product, service, or information).\n\nClassify the lead as Hot, Warm, or Cold based on urgency and clarity.\n\nGenerate a reply that:\n\nGreets the sender by name (if available)\n\nAnswers their question or acknowledges their interest\n\nRequests missing details politely (e.g., budget, product type, location)\n\nEnds with a clear next step (e.g., scheduling a call or visit)\n\nKeep tone friendly, professional, and brand-aligned.\nIf you don’t know something, politely say you’ll forward the query to the team.\n\nYour output must include two parts in JSON format for easy parsing later:\n\n{\n  \"lead_qualification\": \"Hot / Warm / Cold\",\n  \"ai_reply\": \"Generated email reply text\"\n}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1264,
+        608
+      ],
+      "id": "e20643f5-ea9e-4f07-af57-e37bf4ab69db",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DXvm3fzhZE66AcaV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "Hot",
+                    "rightValue": "={{ $json.message.content.lead_qualification }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "dd21105e-72af-4292-8ae9-43ea03f9f173"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Hot leadqualification"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3dc904df-760a-465f-bab1-d6d39ce27254",
+                    "leftValue": "Warm",
+                    "rightValue": "={{ $json.message.content.lead_qualification }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Warm leadqualification"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ecde524e-e9b2-4376-9f51-1206765dc213",
+                    "leftValue": "Cold",
+                    "rightValue": "={{ $json.message.content.lead_qualification }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cold leadqualification"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1808,
+        592
+      ],
+      "id": "0d0a6bce-08a5-48c4-809c-58757308f498",
+      "name": "Lead_Qualification Type"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2d36cde0-6ef8-42e1-b0f2-494acbbb0310",
+              "name": "message.content.lead_qualification",
+              "value": "={{ $json.message.content.lead_qualification }}",
+              "type": "string"
+            },
+            {
+              "id": "78f41e90-8bdc-42ab-9229-5ebb3dab60b4",
+              "name": "message.content.ai_reply",
+              "value": "={{ $json.message.content.ai_reply }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1600,
+        608
+      ],
+      "id": "0b99a77b-14ea-4b0b-8be7-36a422be99e6",
+      "name": "AI reply"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{ $json.message.content.ai_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2176,
+        288
+      ],
+      "id": "fbfce17e-03b4-43b2-9729-3ba3cfb27742",
+      "name": "Reply to a message",
+      "webhookId": "abe42007-4135-49a9-a2ce-6b8cc8d93ed5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0SXuLT762uSaKzM8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        432
+      ],
+      "id": "c7c4401d-5d0a-4156-9cfc-e31bc8d4899f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DXvm3fzhZE66AcaV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.Subject }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a lead data extractor. \nFrom the given conversation details, extract and format:\n- Name (if found)\n- Email (if found)\n- Contact number (if found)\n- Product / Service they are interested in\n- Intent (purchase / inquiry / support)\n- Lead Qualification (hot / warm / cold)\nReturn as JSON only.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2448,
+        288
+      ],
+      "id": "aa9f534e-068f-4eb0-b7aa-59b826c16ec8",
+      "name": "HOT Leadqualification Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2688,
+        448
+      ],
+      "id": "42c1a839-8415-45b1-9bd6-7d79f7a82096",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        736
+      ],
+      "id": "e89a7542-6d26-499e-8975-fdcf446c74d2",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "DXvm3fzhZE66AcaV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2688,
+        736
+      ],
+      "id": "6402e57d-173d-4d8b-8eca-bc5dded54c95",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "={{ $('Message a model').item.json.message.content.ai_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2176,
+        864
+      ],
+      "id": "cf797f3d-9eea-4ece-86e6-f7b95f93a916",
+      "name": "Reply to a message2",
+      "webhookId": "abe42007-4135-49a9-a2ce-6b8cc8d93ed5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0SXuLT762uSaKzM8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        1040
+      ],
+      "id": "8595e2dc-3dde-4cb8-8c7f-d3ba084db892",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "DXvm3fzhZE66AcaV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2688,
+        1040
+      ],
+      "id": "d2655e11-2b5e-45df-bdf8-c25b1ffb52d7",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "={{ $json.message.content.ai_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2176,
+        608
+      ],
+      "id": "05a6100f-eca4-415b-bf50-49beafb2d0c1",
+      "name": "Reply to a message1",
+      "webhookId": "abe42007-4135-49a9-a2ce-6b8cc8d93ed5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0SXuLT762uSaKzM8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.Subject }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a lead data extractor. \nFrom the given conversation details, extract and format:\n- Name (if found)\n- Email (if found)\n- Contact number (if found)\n- Product / Service they are interested in\n- Intent (purchase / inquiry / support)\n- Lead Qualification (hot / warm / cold)\nReturn as JSON only.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2448,
+        608
+      ],
+      "id": "dd5c21cd-0021-4f81-a1c1-67e8b35e6b1d",
+      "name": "WARM Leadqualification Agent1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.Subject }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a lead data extractor. \nFrom the given conversation details, extract and format:\n- Name (if found)\n- Email (if found)\n- Contact number (if found)\n- Product / Service they are interested in\n- Intent (purchase / inquiry / support)\n- Lead Qualification (hot / warm / cold)\nReturn as JSON only.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2448,
+        864
+      ],
+      "id": "550f76cf-982a-47c6-8f21-e673424a22f0",
+      "name": "COLD Leadqualification Agent2"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME",
+          "mode": "list",
+          "cachedResultName": "Lead qualification(hot)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.output.name }}",
+            "email": "={{ $json.output.email }}",
+            " phone number": "={{ $json.output.contact_number }}",
+            "product/service": "={{ $json.output.product_or_service }}",
+            "intent ": "={{ $json.output.intent }}",
+            "lead_qualification": "={{ $json.output.lead_qualification }}"
+          },
+          "matchingColumns": [
+            "name"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " phone number",
+              "displayName": " phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product/service",
+              "displayName": "product/service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent ",
+              "displayName": "intent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_qualification",
+              "displayName": "lead_qualification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2848,
+        288
+      ],
+      "id": "50ad874e-e422-4996-b8f5-9ff031d7db1e",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BZAQ4weQ5E7D499H",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME",
+          "mode": "list",
+          "cachedResultName": "Lead qualification(hot)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.output.name }}",
+            " phone number": "={{ $json.output.contact_number }}",
+            "email": "={{ $json.output.email }}",
+            "product/service": "={{ $json.output.product_or_service }}",
+            "intent ": "={{ $json.output.intent }}",
+            "lead_qualification": "={{ $json.output.lead_qualification }}"
+          },
+          "matchingColumns": [
+            "name"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " phone number",
+              "displayName": " phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product/service",
+              "displayName": "product/service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent ",
+              "displayName": "intent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_qualification",
+              "displayName": "lead_qualification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2864,
+        608
+      ],
+      "id": "6faf8ab4-ec43-4550-9ae1-9b687ceb1ed5",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BZAQ4weQ5E7D499H",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME",
+          "mode": "list",
+          "cachedResultName": "Lead qualification(hot)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WYzvBc92tZ28MH9t1O0yg3mEIrzfs8Qre8LNeB0DgME/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.output.name }}",
+            " phone number": "={{ $json.output.contact_number }}",
+            "email": "={{ $json.output.email }}",
+            "product/service": "={{ $json.output.product_or_service }}",
+            "intent ": "={{ $json.output.intent }}",
+            "lead_qualification": "={{ $json.output.lead_qualification }}"
+          },
+          "matchingColumns": [
+            "name"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " phone number",
+              "displayName": " phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product/service",
+              "displayName": "product/service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent ",
+              "displayName": "intent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_qualification",
+              "displayName": "lead_qualification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2864,
+        864
+      ],
+      "id": "614eb34e-2475-42f0-9de9-9b5c1580bb1b",
+      "name": "Append or update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BZAQ4weQ5E7D499H",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "199eda3a7bacc335",
+          "threadId": "199eda3a7bacc335",
+          "snippet": "",
+          "payload": {
+            "mimeType": "multipart/alternative"
+          },
+          "sizeEstimate": 6019,
+          "historyId": "88308",
+          "internalDate": "1760628495000",
+          "labels": [
+            {
+              "id": "INBOX",
+              "name": "INBOX"
+            },
+            {
+              "id": "CATEGORY_PERSONAL",
+              "name": "CATEGORY_PERSONAL"
+            },
+            {
+              "id": "UNREAD",
+              "name": "UNREAD"
+            }
+          ],
+          "From": "shripaad k <shripaadk@gmail.com>",
+          "Subject": "“Hey, I’m Arjun Verma. I just stumbled upon your furniture page — nice stuff! I’m not really looking to buy right now, just checking out what styles are trending. You can email me at arjunv.designs@gmail.com or text me at +91 98123 44367 in case you have a new catalog.”",
+          "To": "futuremillionare1707@gmail.com"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reply": {
+      "main": [
+        [
+          {
+            "node": "Lead_Qualification Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead_Qualification Type": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message": {
+      "main": [
+        [
+          {
+            "node": "HOT Leadqualification Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "HOT Leadqualification Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "HOT Leadqualification Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "WARM Leadqualification Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "WARM Leadqualification Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message2": {
+      "main": [
+        [
+          {
+            "node": "COLD Leadqualification Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "COLD Leadqualification Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "COLD Leadqualification Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message1": {
+      "main": [
+        [
+          {
+            "node": "WARM Leadqualification Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HOT Leadqualification Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WARM Leadqualification Agent1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "COLD Leadqualification Agent2": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "abd9b12f-3ac1-446e-a1eb-4174436b6ba1",
+  "meta": {
+    "instanceId": "0efff14001a8667d22aaf71db5dda736acdaccf919104620394fbb22626eed68"
+  },
+  "id": "UEoc5f83CJLesJP4",
+  "tags": []
+}
