@@ -1,0 +1,405 @@
+{
+  "name": "AI Appointment Booking Automation 1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "appointment-booking",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9d28e01f-8f6a-4652-9333-bce33c7e312b",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        208
+      ],
+      "webhookId": "appointment-booking-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1AKpRDi_NL5zs1SLvDcjsJ_Kbkl2vUylMRah539_0n5k",
+          "mode": "list",
+          "cachedResultName": "Appointment A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AKpRDi_NL5zs1SLvDcjsJ_Kbkl2vUylMRah539_0n5k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AKpRDi_NL5zs1SLvDcjsJ_Kbkl2vUylMRah539_0n5k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json.body.name }}",
+            "Email Address": "={{ $json.body.email }}",
+            "Phone Number": "={{ $json.body.phone }}",
+            "Service Type": "={{ $json.body.service }}",
+            "Preferred Date": "={{ $json.body.date }}",
+            "Preferred Time": "={{ $json.body.time }}",
+            "Message": "={{ $json.body.message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service Type",
+              "displayName": "Service Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Date",
+              "displayName": "Preferred Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Time",
+              "displayName": "Preferred Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ef158e3e-2205-4202-a289-c25d4c9fa7a2",
+      "name": "Save Appointment to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -1040,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Z3Tjx4ienydeQGcS",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $('Webhook Trigger').item.json.body;\n\nconst htmlEmail = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Appointment Confirmation</title>\n  <style>\n    body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Arial, sans-serif; }\n    .wrapper { width: 100%; background-color: #f4f6f9; padding: 40px 20px; box-sizing: border-box; }\n    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }\n    .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; text-align: center; }\n    .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }\n    .header p { color: #bfdbfe; margin: 8px 0 0; font-size: 15px; }\n    .checkmark { font-size: 48px; margin-bottom: 12px; display: block; }\n    .body { padding: 36px 32px; }\n    .greeting { font-size: 17px; color: #1e293b; margin-bottom: 8px; font-weight: 600; }\n    .message { font-size: 15px; color: #475569; line-height: 1.7; margin-bottom: 28px; }\n    .details-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; margin-bottom: 28px; }\n    .details-card h3 { margin: 0 0 16px; font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }\n    .detail-row { display: flex; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }\n    .detail-row:last-child { border-bottom: none; padding-bottom: 0; }\n    .detail-icon { width: 32px; height: 32px; border-radius: 8px; background: #dbeafe; display: flex; align-items: center; justify-content: center; margin-right: 14px; font-size: 14px; flex-shrink: 0; }\n    .detail-label { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }\n    .detail-value { font-size: 15px; color: #1e293b; font-weight: 500; }\n    .cta-section { text-align: center; margin-bottom: 28px; }\n    .footer { background: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center; }\n    .footer p { margin: 0 0 8px; font-size: 13px; color: #94a3b8; line-height: 1.6; }\n    .footer a { color: #2563eb; text-decoration: none; font-weight: 500; }\n  </style>\n</head>\n<body>\n  <div class=\"wrapper\">\n    <div class=\"container\">\n      <div class=\"header\">\n        <span class=\"checkmark\">✅</span>\n        <h1>Appointment Confirmation</h1>\n        <p>Your booking has been successfully received</p>\n      </div>\n      <div class=\"body\">\n        <p class=\"greeting\">Dear ${item.name},</p>\n        <p class=\"message\">\n          Your appointment for <strong>${item.service}</strong> has been successfully scheduled. \n          We look forward to seeing you! Please find your appointment details below.\n        </p>\n        <div class=\"details-card\">\n          <h3>📋 Appointment Details</h3>\n          <div class=\"detail-row\">\n            <div class=\"detail-icon\">🛠️</div>\n            <div>\n              <div class=\"detail-label\">Service</div>\n              <div class=\"detail-value\">${item.service}</div>\n            </div>\n          </div>\n          <div class=\"detail-row\">\n            <div class=\"detail-icon\">📅</div>\n            <div>\n              <div class=\"detail-label\">Date</div>\n              <div class=\"detail-value\">${item.date}</div>\n            </div>\n          </div>\n          <div class=\"detail-row\">\n            <div class=\"detail-icon\">⏰</div>\n            <div>\n              <div class=\"detail-label\">Time</div>\n              <div class=\"detail-value\">${item.time}</div>\n            </div>\n          </div>\n          <div class=\"detail-row\">\n            <div class=\"detail-icon\">📞</div>\n            <div>\n              <div class=\"detail-label\">Phone</div>\n              <div class=\"detail-value\">${item.phone}</div>\n            </div>\n          </div>\n        </div>\n      </div>\n      <div class=\"footer\">\n        <p>Need to reschedule or have questions?</p>\n        <p>Feel free to <a href=\"mailto:support@yourdomain.com\">contact us</a> and we'll be happy to assist you.</p>\n        <p style=\"margin-top: 16px; font-size: 12px; color: #cbd5e1;\">© 2025 Your Business Name · All rights reserved</p>\n      </div>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn {\n  htmlEmail,\n  name: item.name,\n  email: item.email,\n  phone: item.phone,\n  service: item.service,\n  date: item.date,\n  time: item.time,\n  message: item.message\n};"
+      },
+      "id": "32419e26-6424-4270-8d1c-f976e0caf0ca",
+      "name": "Generate HTML Confirmation Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "unit": "hours"
+      },
+      "id": "9a490ede-2f09-43e1-a306-ee4dfd0192d3",
+      "name": "Wait 24 Hours Before Appointment",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        208
+      ],
+      "webhookId": "wait-node-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Appointment booked successfully!\",\n  \"appointment\": {\n    \"name\": \"{{ $('Webhook Trigger').item.json.body.name }}\",\n    \"service\": \"{{ $('Webhook Trigger').item.json.body.service }}\",\n    \"date\": \"{{ $('Webhook Trigger').item.json.body.date }}\",\n    \"time\": \"{{ $('Webhook Trigger').item.json.body.time }}\",\n    \"status\": \"Booked\"\n  }\n}",
+        "options": {}
+      },
+      "id": "564b9768-96c6-46f6-a726-7e52c375001f",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "test@example.com",
+          "mode": "list",
+          "cachedResultName": "test@example.com"
+        },
+        "start": "={{ $json['Preferred Date'] }}T{{ $json['Preferred Time'] }}",
+        "end": "={{ $json[\"Preferred Date\"] + \"T03:25:00\" }}",
+        "additionalFields": {
+          "description": "=Client Name: {{$json[\"Full Name\"]}}\n\nEmail: {{$json[\"Email Address\"]}}\n\nPhone: {{$json[\"Phone Number\"]}}\n\nService: {{$json[\"Service Type\"]}}\n\nMessage:\n{{$json[\"Message\"]}}",
+          "summary": "=Appointment with {{$json[\"Full Name\"]}} - {{$json[\"Service Type\"]}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -784,
+        208
+      ],
+      "id": "8b80a80b-c5ad-4076-9632-fd91d8fb765c",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SD3kLYPMybQB2p5e",
+          "name": "Google Calendar OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Dear,{{ $json.name }}",
+        "message": "={{ $json.htmlEmail }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        208
+      ],
+      "id": "71c9dd4b-0339-4d3c-986a-d976a244bad2",
+      "name": "Send a message",
+      "webhookId": "4ea27c1d-5282-4667-8d2f-a5eaab2b6a5a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rT1MMETFTFSRgJnS",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook Trigger').item.json.body.email }}",
+        "subject": "REMINDER !",
+        "message": "=This is a friendly reminder about your upcoming appointment with us. \n📅 Date: {{ $('Save Appointment to Google Sheets').item.json['Preferred Date'] }}\n⏰ Time: {{ $('Save Appointment to Google Sheets').item.json['Preferred Time'] }}\n🦷 Service: {{ $('Save Appointment to Google Sheets').item.json['Service Type'] }}\n\nIf you need to reschedule or cancel your appointment, please reply to this email or contact us.  We look forward to seeing you. \nBest regards, \nXYZ Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        208
+      ],
+      "id": "c90bbdb6-0091-4eee-a6b7-14a1842418d2",
+      "name": "Send a message1",
+      "webhookId": "a57de8d5-6e46-4df7-b9f6-17a3d1bea9af",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rT1MMETFTFSRgJnS",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook Trigger": [
+      {
+        "json": {
+          "headers": {
+            "host": "YOUR_N8N_INSTANCE.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+            "content-length": "199",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "103.41.97.212",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "IN",
+            "cf-ray": "9dac07a7db17557b-HYD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://ais-dev-kguqjdvoruoxksurbcsumu-YOUR_PROJECT_ID.asia-east1.run.app",
+            "priority": "u=1, i",
+            "referer": "https://ais-dev-kguqjdvoruoxksurbcsumu-YOUR_PROJECT_ID.asia-east1.run.app/",
+            "sec-ch-ua": "\"Not:A-Brand\";v=\"99\", \"Google Chrome\";v=\"145\", \"Chromium\";v=\"145\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "103.41.97.212, 104.22.6.137",
+            "x-forwarded-host": "YOUR_N8N_INSTANCE.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-114-8f67bbd4f-shw85",
+            "x-is-trusted": "yes",
+            "x-real-ip": "103.41.97.212"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "name": "Alexander",
+            "email": "test@example.com",
+            "phone": "567897654",
+            "service": "Project Planning",
+            "date": "2026-03-25",
+            "time": "03:19",
+            "message": "A casual project discussion about a commercial setup"
+          },
+          "webhookUrl": "https://YOUR_N8N_INSTANCE.app.n8n.cloud/webhook-test/appointment-booking",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Save Appointment to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Appointment to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 24 Hours Before Appointment": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Response": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait 24 Hours Before Appointment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "564e069f-d6fd-46ab-8b08-651c086c2b60",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "11f83bbf1a49d0ee8bf77153748862773a633d868be96d188b15185a3c78a196"
+  },
+  "id": "bPlFqUsSffeRhEdr",
+  "tags": []
+}

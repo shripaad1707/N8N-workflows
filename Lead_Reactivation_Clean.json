@@ -1,0 +1,586 @@
+{
+  "name": "Lead Reactivation & Follow-up Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reactivate-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "00953e3b-917c-402a-bf75-fbd3d34e3d04",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        240
+      ],
+      "webhookId": "a136c8db-a03d-490a-9a9f-728d4796ec06"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.name }}",
+              "operation": "isNotEmpty"
+            }
+          ],
+          "boolean": [
+            {
+              "value1": "={{ !!$json.body.email || !!$json.body.phone }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "08cc50dd-ed47-4deb-a932-c1063199ff3a",
+      "name": "Validate Inputs",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0a0bbe77-df5f-4a61-bc2d-905ccddedb92",
+      "name": "Set Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@yourdomain.com",
+        "toEmail": "={{ $json.fields.Email }}",
+        "subject": "Quick follow-up",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f7fa;padding:40px;\">\n  \n  <div style=\"max-width:620px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);\">\n\n    <!-- Header -->\n    <div style=\"background:#0b0b0c;padding:22px 30px;color:#fff;\">\n      <h2 style=\"margin:0;font-weight:600;letter-spacing:0.5px;\">Aether</h2>\n      <p style=\"margin:5px 0 0;font-size:13px;color:#bbb;\">Lead Reactivation System</p>\n    </div>\n\n    <!-- Body -->\n    <div style=\"padding:32px;\">\n      \n      <h3 style=\"margin-top:0;color:#111;\">Hi {{ $json.fields.Name }},</h3>\n\n      <p style=\"color:#444;line-height:1.6;\">\n        We noticed your earlier interest and wanted to quickly follow up with you.\n      </p>\n\n      <p style=\"color:#444;line-height:1.6;\">\n        Our system helps businesses automate lead responses, follow-ups, and improve conversion rates without missing any potential customers.\n      </p>\n\n      <!-- Highlight -->\n      <div style=\"background:#f1f3f5;padding:15px;border-radius:10px;margin:20px 0;\">\n        <p style=\"margin:0;color:#333;\">\n          🚀 <strong>Status:</strong> Your request is being actively followed up\n        </p>\n      </div>\n\n      <p style=\"color:#444;line-height:1.6;\">\n        Just wanted to check — are you still interested in continuing?\n      </p>\n\n      <!-- CTA -->\n      <div style=\"text-align:center;margin:30px 0;\">\n        <a href=\"#\" style=\"background:#111;color:#fff;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:500;\">\n          Reply to Continue\n        </a>\n      </div>\n\n      <p style=\"color:#888;font-size:13px;\">\n        If this wasn’t intended for you, you can safely ignore this email.\n      </p>\n\n    </div>\n\n    <!-- Footer -->\n    <div style=\"background:#fafafa;padding:18px;text-align:center;font-size:12px;color:#999;\">\n      © 2026 Aether. All rights reserved.\n    </div>\n\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "82aacf4d-23cc-4866-b25c-91323843eba6",
+      "name": "Email — Reactivation",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        0,
+        48
+      ],
+      "webhookId": "a08a727e-b454-40b5-95cd-4054d0420874",
+      "credentials": {
+        "smtp": {
+          "id": "lwfn1zkmFpYmfqX4",
+          "name": "SMTP account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "whatsapp:YOUR_TWILIO_NUMBER"
+            },
+            {
+              "name": "To",
+              "value": "whatsapp:YOUR_TEST_NUMBER"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $json.fields.Name }},  \n\nThis is Aether. We came across your earlier message and just wanted to check in.  \n\nWe help businesses automate lead follow-ups and improve response rates.  \n\nJust checking — are you still interested in moving forward?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b8d48bc6-b4da-456f-9706-f68b2ed13cd9",
+      "name": "WhatsApp — Message 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        16,
+        336
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "SGDOnL8W3nyIuXWX",
+          "name": "Unnamed credential"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "id": "7ba2786b-3cf6-4891-9984-beb2b838ca11",
+      "name": "Wait — 2 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "webhookId": "8e764bad-052d-447d-87aa-3c74f61eb65c",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "43594502-645a-479b-a2de-13bfb60f01ab",
+      "name": "Error Logger",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        -448,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Reactivation System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl0lZMhuvtxRLibH",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/tbl0lZMhuvtxRLibH"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.body.name }}",
+            "Email": "={{ $json.body.email }}",
+            "Phone number": "={{ $json.body.phone }}",
+            "Message": "={{ $json.body.message }}",
+            "Status": "New lead"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "7c9e805f-0861-4ee8-adf2-d616d22296b5",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Bfq6ODrSHTpTykJm",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Reactivation System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl0lZMhuvtxRLibH",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/tbl0lZMhuvtxRLibH"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Create a record').item.json.fields.Name }}",
+            "Email": "={{ $('Create a record').item.json.fields.Email }}",
+            "Phone number": "={{ $('Create a record').item.json.fields['Phone number'] }}",
+            "Message": "={{ $('Webhook').item.json.body.message }}",
+            "Status": "Lead Followed",
+            "id": "={{ $('Create a record').item.json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        656,
+        112
+      ],
+      "id": "44bef74c-6233-4cc6-bfcc-21430739580a",
+      "name": "Update record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Bfq6ODrSHTpTykJm",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "YOUR_TWILIO_NUMBER"
+            },
+            {
+              "name": "To",
+              "value": "YOUR_TEST_NUMBER"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $('Create a record').item.json.fields.Name }},  \n\nJust following up regarding your earlier message.  \n\nIf you're still interested, we’d be happy to assist you with a quick setup to improve your lead conversions.  \n\nIf not, no worries at all — feel free to reach out anytime 👍"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8ff19e1f-a7c9-4a1b-b968-92516bee1e16",
+      "name": "WhatsApp — Message ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        400,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "SGDOnL8W3nyIuXWX",
+          "name": "Unnamed credential"
+        }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "YOUR_N8N_INSTANCE.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+            "content-length": "124",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "103.41.97.212",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "IN",
+            "cf-ray": "9e05a66ee8f0557b-HYD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://ais-dev-tcovv3pkdsatkkvzptulvd-181145412367.asia-east1.run.app",
+            "priority": "u=1, i",
+            "referer": "https://ais-dev-tcovv3pkdsatkkvzptulvd-181145412367.asia-east1.run.app/",
+            "sec-ch-ua": "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "103.41.97.212, 104.22.6.137",
+            "x-forwarded-host": "YOUR_N8N_INSTANCE.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-114-8f67bbd4f-shw85",
+            "x-is-trusted": "yes",
+            "x-real-ip": "103.41.97.212"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "name": "shripaad k",
+            "email": "test@example.com",
+            "phone": "0000000000",
+            "message": "\"Hey, I'm interested in your service\""
+          },
+          "webhookUrl": "https://YOUR_N8N_INSTANCE.app.n8n.cloud/webhook-test/reactivate-lead",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Inputs": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email — Reactivation": {
+      "main": [
+        [
+          {
+            "node": "Wait — 2 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait — 2 Days": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp — Message ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Email — Reactivation",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp — Message 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Message ": {
+      "main": [
+        [
+          {
+            "node": "Update record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "36964fe7-046e-4f41-a237-a01e6e02837a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "11f83bbf1a49d0ee8bf77153748862773a633d868be96d188b15185a3c78a196"
+  },
+  "id": "ePBZhXx9WYNK3mOE",
+  "tags": []
+}

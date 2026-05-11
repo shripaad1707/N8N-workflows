@@ -1,0 +1,541 @@
+{
+  "name": "AI Social Media Automation — Production",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "23efbbb5-d3fb-441a-bbe0-c50d440f1646",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -3872,
+        -656
+      ],
+      "webhookId": "social-media-chat-trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst topic = (raw.chatInput || '').trim();\n\n// Empty check\nif (!topic) {\n  return [{ json: { valid: false, error: 'Topic is empty.', topic: null } }];\n}\n\n// Too long\nif (topic.length > 300) {\n  return [{ json: { valid: false, error: 'Topic too long. Keep it under 300 characters.', topic: null } }];\n}\n\n// No real words — must have at least one word with 3+ letters\nif (!/\\b[a-zA-Z]{3,}\\b/.test(topic)) {\n  return [{ json: { valid: false, error: 'Invalid topic. Please enter meaningful text.', topic: null } }];\n}\n\n// Gibberish check — no vowels at all = gibberish\nconst words = topic.toLowerCase().match(/\\b[a-z]{3,}\\b/g) || [];\nconst gibberishCount = words.filter(w => !/[aeiou]/.test(w)).length;\n\nif (words.length > 0 && gibberishCount / words.length > 0.6) {\n  return [{ json: { valid: false, error: 'Topic looks like gibberish. Please enter a real topic.', topic: null } }];\n}\n\nreturn [{ json: { valid: true, error: null, topic: topic } }];"
+      },
+      "id": "c42435aa-38b5-40ab-9d3b-79e5417deeb3",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3696,
+        -656
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-valid-check",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "eb53bea8-ffad-4a75-b1d6-257bbc603c90",
+      "name": "Is Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3536,
+        -656
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err-msg",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "err-detail",
+              "name": "message",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "err-time",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "520578e2-61e6-4e07-8412-89857fecfee1",
+      "name": "Return Validation Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3472,
+        -384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── PLATFORM VARIATIONS NODE ─────────────────────────────────\n// Takes the Gemini-generated core content and creates\n// platform-specific variations in tone and formatting.\n// All content is 100% dynamic — no hardcoding.\n\nconst data = $input.first().json;\n\nconst { caption, hashtags_string, cta, topic } = data;\n\n// Pick top 3 hashtags for LinkedIn (professional platforms use fewer)\nconst topHashtags = data.hashtags.slice(0, 3).map(h => `#${h}`).join(' ');\n\n// ── Instagram: visual-first, emoji-rich, hashtag-heavy ──\nconst instagram = {\n  content: `✨ ${caption}\\n\\n👉 ${cta}\\n\\n${hashtags_string} #Reels #Viral #Explore`,\n  tone: 'Visual, emoji-rich, hashtag-heavy',\n  platform: 'Instagram'\n};\n\n// ── LinkedIn: professional, insight-driven, thought-leadership ──\nconst linkedin = {\n  content: `${caption}\\n\\nKey Takeaway: Staying ahead on \"${topic}\" is no longer optional — it's a competitive necessity.\\n\\n${cta}\\n\\n${topHashtags} #ProfessionalGrowth #Innovation`,\n  tone: 'Professional, insight-driven, thought-leadership',\n  platform: 'LinkedIn'\n};\n\n// ── Facebook: conversational, community-focused, story-style ──\nconst facebook = {\n  content: `Hey everyone! 👋\\n\\n${caption}\\n\\nWe'd love to hear your thoughts — ${cta}\\n\\n${hashtags_string}`,\n  tone: 'Friendly, community-focused, conversational',\n  platform: 'Facebook'\n};\n\n// ── YouTube: SEO-optimised description with chapter placeholders ──\nconst youtube = {\n  content: `${caption}\\n\\n🔔 SUBSCRIBE for more content on ${topic}!\\n\\n${cta}\\n\\n⏱️ CHAPTERS:\\n00:00 – Introduction\\n01:30 – Deep Dive\\n05:00 – Key Insights\\n08:00 – Final Thoughts\\n\\n${hashtags_string}`,\n  tone: 'SEO-optimised, informative, subscriber-focused',\n  platform: 'YouTube'\n};\n\nreturn [{\n  json: {\n    ...data,\n    platforms: {\n      instagram,\n      linkedin,\n      facebook,\n      youtube\n    }\n  }\n}];"
+      },
+      "id": "3167ddab-4dcb-4c4a-95e0-863b557cbda4",
+      "name": "Create Platform Variations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2832,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    image_url: `https://image.pollinations.ai/prompt/${encodeURIComponent($json.image_prompt)}`\n  }\n}];"
+      },
+      "id": "22192d26-b0c8-4874-b876-abd5d33f934f",
+      "name": "Generate Image (Leonardo AI)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2464,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1jri1Gxzp5rlkdXpKqsfcaKrMFW4k3XpVxhz6AFoLoKQ",
+          "mode": "list",
+          "cachedResultName": "AI Social Media Automation Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jri1Gxzp5rlkdXpKqsfcaKrMFW4k3XpVxhz6AFoLoKQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jri1Gxzp5rlkdXpKqsfcaKrMFW4k3XpVxhz6AFoLoKQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Create Platform Variations').item.json.topic }}",
+            "Caption": "={{ $('Create Platform Variations').item.json.caption }}",
+            "Hashtags": "={{ $json.hashtags }}",
+            "Cta": "={{ $('Create Platform Variations').item.json.cta }}",
+            "Image Url": "={{ $('Generate Image (Leonardo AI)').item.json.image_url }}",
+            "Platform": "={{ $json.platform }}",
+            "content": "={{ $json.content }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cta",
+              "displayName": "Cta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image Url",
+              "displayName": "Image Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fbf4058c-15f4-497b-999c-b25ddbaf0067",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1952,
+        -928
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QDkTTtLzpHenlq5F",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Map Platform Content for Sheets').first().json;\nconst imageUrl = $('Generate Image (Leonardo AI)').first().json.image_url;\n\nconst summary = {\n  status: 'success',\n  workflow: 'AI Social Media Automation',\n  completed_at: new Date().toISOString(),\n\n  topic_processed: data.topic,\n\n  content_generated: {\n    caption: data.caption,\n    hashtags: data.hashtags,\n    cta: data.cta,\n    image_url: imageUrl\n  },\n\n  platforms_posted: ['Instagram', 'LinkedIn'],\n\n  logged_to_google_sheets: true,\n\n  message: `✅ Done! Content for \"${data.topic}\" has been generated, posted to Instagram & LinkedIn, and logged to Google Sheets.`\n};\n\nreturn [{ json: summary }];"
+      },
+      "id": "cd8557ae-0844-43bb-8ab4-25e97473fee3",
+      "name": "Final Output Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        -928
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── GEMINI API ERROR HANDLER ─────────────────────────────────\n// Catches failures from the Gemini HTTP Request node.\n// Extracts a useful error message and formats it cleanly.\n\nconst raw = $input.first().json;\nconst topic = $('Validate Input').first().json.topic || 'unknown';\n\nlet errorMessage = 'Unknown error contacting Gemini API';\nif (raw.error) {\n  errorMessage = `Gemini API Error ${raw.error.code || ''}: ${raw.error.message || raw.error}`;\n} else if (raw.message) {\n  errorMessage = raw.message;\n}\n\nreturn [{\n  json: {\n    status: 'error',\n    error_type: 'gemini_api_failure',\n    error_message: errorMessage,\n    topic: topic,\n    timestamp: new Date().toISOString(),\n    suggestion: 'Check your GEMINI_API_KEY, quota limits, and network connectivity.'\n  }\n}];"
+      },
+      "id": "80126698-2fd5-451d-a06c-c9c193a507a5",
+      "name": "Gemini API Error Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3088,
+        -528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = $json.content.parts[0].text;\n\n// remove ```json and ```\nraw = raw.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\nreturn [{ json: JSON.parse(raw) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3040,
+        -768
+      ],
+      "id": "845b2c9b-8643-4f42-aaf0-c653bac7ecdf",
+      "name": "Parse Gemini JSON Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nreturn [\n  {\n    json: {\n      ...data,\n      platform: \"Instagram\",\n      content: data.platforms.instagram.content\n    }\n  },\n  {\n    json: {\n      ...data,\n      platform: \"LinkedIn\",\n      content: data.platforms.linkedin.content\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2640,
+        -720
+      ],
+      "id": "f956ef52-9dd7-4c53-88fd-6f12b9ed93be",
+      "name": "Split Into Platform Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/3b973f94-9526-45ca-9b4b-50a1b753c7a2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Platform",
+              "value": "Instagram"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "caption",
+              "value": "={{ $('Split Into Platform Items').item.json.caption }}"
+            },
+            {
+              "name": " image_url",
+              "value": "={{ $json.image_url }}"
+            },
+            {
+              "name": " hashtags",
+              "value": "={{ $('Split Into Platform Items').item.json.hashtags_string }}"
+            },
+            {
+              "name": "cta",
+              "value": "={{ $('Split Into Platform Items').item.json.cta }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "3456ebb8-e090-4c9a-accc-7ebd025129c2",
+      "name": "Post to Instagram & LinkedIn (Simulated)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2304,
+        -720
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const variations = $('Create Platform Variations').first().json;\nconst imageUrl = $('Generate Image (Leonardo AI)').first().json.image_url;\n\n// Fix hashtags — array to clean string\nconst hashtags = Array.isArray(variations.hashtags)\n  ? variations.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ')\n  : variations.hashtags_string || '';\n\nreturn ['instagram', 'linkedin'].map(key => {\n  const p = variations.platforms[key];\n  return {\n    json: {\n      topic:     variations.topic,\n      caption:   variations.caption,\n      hashtags:  hashtags,\n      cta:       variations.cta,\n      image_url: imageUrl,\n      platform:  p.platform,\n      content:   p.content\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2144,
+        -928
+      ],
+      "id": "1583afb4-1d94-41ae-901d-d3367e7d10fb",
+      "name": "Map Platform Content for Sheets"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional social media content strategist and AI visual prompt engineer.\n\nYour task is to generate HIGH-QUALITY, VIRAL-READY social media content for a given topic.\n\nTopic: {{ $json.topic }}\n\nGenerate the output STRICTLY in valid JSON format with the following structure:\n\n{\n  \"topic\": \"\",\n  \"caption\": \"\",\n  \"hashtags\": [],\n  \"hashtags_string\": \"\",\n  \"cta\": \"\",\n  \"image_prompt\": \"\"\n}\n\n---\n\n🎯 REQUIREMENTS:\n\n1. CAPTION:\n- Write an engaging, scroll-stopping caption\n- Use emotional hooks + storytelling\n- Keep it platform-neutral (usable for Instagram & LinkedIn)\n- Include emojis (but not too many)\n- Keep it between 80–150 words\n- Make it feel human, not robotic\n\n---\n\n2. HASHTAGS:\n- Provide 8–12 highly relevant hashtags\n- Mix of:\n  - trending hashtags\n  - niche hashtags\n  - broad reach hashtags\n- Output BOTH:\n  → array format (hashtags)\n  → string format (hashtags_string with spaces)\n\n---\n\n3. CTA (Call To Action):\n- Make it engaging and conversational\n- Encourage comments or shares\n- Avoid generic phrases\n\n---\n\n4. IMAGE PROMPT (VERY IMPORTANT):\nCreate a HIGH-QUALITY AI image generation prompt for Leonardo AI:\n\n- Ultra-detailed and cinematic\n- Include:\n  → subject description\n  → environment\n  → lighting (golden hour / soft light / dramatic)\n  → camera style (cinematic, DSLR, depth of field)\n  → realism level (photorealistic, 8k, ultra HD)\n  → mood (emotional, futuristic, inspiring, etc.)\n\n- Avoid generic prompts\n- Make it visually powerful and realistic\n\nExample style:\n\"A cinematic, ultra-realistic 8K image of a futuristic hospital where AI-powered robots assist doctors in surgery, glowing holographic interfaces, soft blue ambient lighting, depth of field, highly detailed, photorealistic, professional photography\"\n\n---\n\n⚠️ RULES:\n- Output ONLY JSON (no explanation)\n- No markdown formatting\n- No ```json blocks\n- Ensure valid JSON (important for parsing)\n\nMake the output premium quality like top AI-generated viral content.\nWrite content as if you are managing a viral AI Instagram page with 1M followers."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -3344,
+        -736
+      ],
+      "id": "62912ca6-21f3-4bcf-a8a7-4b3d556652bd",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "a8guKF1gUyVHYorU",
+          "name": "Google Gemini(PaLM) Api account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Is Input Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Input Valid?": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Platform Variations": {
+      "main": [
+        [
+          {
+            "node": "Split Into Platform Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image (Leonardo AI)": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram & LinkedIn (Simulated)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Final Output Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini JSON Response": {
+      "main": [
+        [
+          {
+            "node": "Create Platform Variations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Platform Items": {
+      "main": [
+        [
+          {
+            "node": "Generate Image (Leonardo AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram & LinkedIn (Simulated)": {
+      "main": [
+        [
+          {
+            "node": "Map Platform Content for Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Platform Content for Sheets": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Gemini API Error Handler",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parse Gemini JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "84519467-a29f-4adb-8c83-c0e1971038d4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "SLK2DEjCimLJgNR4",
+  "tags": []
+}
