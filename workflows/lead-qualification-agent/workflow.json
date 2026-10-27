@@ -248,7 +248,7 @@
     },
     {
       "parameters": {
-        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"lead.two@example.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
@@ -285,7 +285,7 @@
     },
     {
       "parameters": {
-        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"lead.two@example.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
@@ -345,7 +345,7 @@
     },
     {
       "parameters": {
-        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@gmail.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
+        "jsonSchemaExample": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"lead.two@example.com\",\n  \"contact_number\": \"+91 9876543210\",\n  \"product_or_service\": \"3-seater beige sofa\",\n  \"intent\": \"purchase inquiry\",\n  \"lead_qualification\": \"hot\"\n}\n"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
@@ -764,9 +764,9 @@
               "name": "UNREAD"
             }
           ],
-          "From": "shripaad k <shripaadk@gmail.com>",
-          "Subject": "“Hey, I’m Arjun Verma. I just stumbled upon your furniture page — nice stuff! I’m not really looking to buy right now, just checking out what styles are trending. You can email me at arjunv.designs@gmail.com or text me at +91 98123 44367 in case you have a new catalog.”",
-          "To": "futuremillionare1707@gmail.com"
+          "From": "shripaad k <sales@example.com>",
+          "Subject": "“Hey, I’m Arjun Verma. I just stumbled upon your furniture page — nice stuff! I’m not really looking to buy right now, just checking out what styles are trending. You can email me at lead.one@example.com or text me at +91 98123 44367 in case you have a new catalog.”",
+          "To": "sales@example.com"
         }
       }
     ]
